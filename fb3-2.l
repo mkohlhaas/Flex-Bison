@@ -1,4 +1,4 @@
-// Recognize tokens for the calculator.
+/* Recognize tokens for the calculator. */
 
 %option noyywrap nodefault yylineno
 %{

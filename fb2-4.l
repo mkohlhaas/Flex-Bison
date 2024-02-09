@@ -1,4 +1,4 @@
-// fb2-4 text concordance
+/* fb2-4 text concordance */
 
 %option noyywrap nodefault yylineno case-insensitive
 

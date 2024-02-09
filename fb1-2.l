@@ -1,4 +1,4 @@
-// English -> American
+/* English -> American */
 
 %%
 "colour" { printf("color"); }

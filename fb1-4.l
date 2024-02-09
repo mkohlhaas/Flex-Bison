@@ -1,4 +1,4 @@
-// Recognize tokens for the calculator and print them out.
+/* Recognize tokens for the calculator and print them out. */
 
 %{
    enum yytokentype {

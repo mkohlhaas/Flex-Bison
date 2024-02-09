@@ -1,4 +1,4 @@
-// word count, pure version
+/* word count, pure version */
 
 %option noyywrap nodefault reentrant
 %{

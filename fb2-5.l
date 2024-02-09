@@ -1,4 +1,4 @@
-// fb2-5 C cross-ref
+/* fb2-5 C cross-ref */
 
 %option noyywrap nodefault yylineno
 

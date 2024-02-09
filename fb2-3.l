@@ -1,4 +1,4 @@
-// fb2-3 skeleton for include files
+/* fb2-3 skeleton for include files */
 
 %option noyywrap warn nodefault
 %x IFILE

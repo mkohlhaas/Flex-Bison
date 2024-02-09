@@ -1,4 +1,4 @@
-// fb2-2 read several files
+/* fb2-2 read several files */
 
 %option noyywrap
 

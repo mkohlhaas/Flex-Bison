@@ -1,4 +1,4 @@
-// fb2-1 even more like unix wc with explicit input
+/* fb2-1 even more like unix wc with explicit input */
 
 %{
 int chars = 0;

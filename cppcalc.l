@@ -1,4 +1,4 @@
-// Recognize tokens for the C++ calculator and print them out.
+/* Recognize tokens for the C++ calculator and print them out. */
 
 %option noyywrap
 %{

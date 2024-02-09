@@ -1,5 +1,5 @@
-// Recognize tokens for the calculator.
-// pure scanner and parser version
+/* Recognize tokens for the calculator. */
+/* pure scanner and parser version */
 
 %option noyywrap nodefault yylineno reentrant bison-bridge
 %option header-file="purecalc.lex.h"
