@@ -1,11 +1,4 @@
-/* Companion source code for "flex & bison", published by O'Reilly
- * Media, ISBN 978-0-596-15597-1
- * Copyright (c) 2009, Taughannock Networks. All rights reserved.
- * See the README file for license conditions and contact info.
- * $Header: /home/johnl/flnb/code/RCS/fb2-5.l,v 2.1 2009/11/08 02:53:18 johnl Exp $
- */
-
-/* fb2-5 C cross-ref */
+// fb2-5 C cross-ref
 
 %option noyywrap nodefault yylineno
 
@@ -44,7 +37,7 @@ ILEN    ([Uu](L|l|LL|ll)?|(L|l|LL|ll)[Uu]?)
 
   int defining;			/* names are probably definitions */
 
-/* include file stack */  
+/* include file stack */
   struct bufstack {
     struct bufstack *prev;	/* previous entry */
     YY_BUFFER_STATE bs;		/* saved buffer */
@@ -160,7 +153,7 @@ L?\"([^\"\\]|\\['"?\\abfnrtv]|\\[0-7]{1,3}|\\[Xx][0-9a-fA-F]+|{UCN})+\"
  /* recognize an include */
 ^"#"[ \t]*include[ \t]*[\"<] { BEGIN IFILE; }
 
-<IFILE>[^>\"]+  { 
+<IFILE>[^>\"]+  {
                        { int c;
 			 while((c = input()) && c != '\n') ;
 		       }
@@ -237,7 +230,7 @@ addref(int lineno, char *filename, char *word, int flags)
 /* print the references
  * sort the table alphabetically
  * then flip each entry's reflist to get it into forward order
- * and print it out 
+ * and print it out
  */
 
 /* aux function for sorting */
@@ -365,5 +358,5 @@ int
   curbs = prevbs;
   yylineno = curbs->lineno;
   curfilename = curbs->filename;
-  return 1; 
+  return 1;
 }
