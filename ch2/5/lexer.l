@@ -1,4 +1,4 @@
-/* fb2-5 C cross-ref */
+/* C cross-ref */
 
 %option noyywrap nodefault yylineno
 
@@ -14,43 +14,44 @@ EXP	([Ee][-+]?[0-9]+)
 ILEN    ([Uu](L|l|LL|ll)?|(L|l|LL|ll)[Uu]?)
 /* the symbol table */
 %{
-  struct symbol {		/* a variable name */
-    struct ref *reflist;
-    char *name;
-  };
+struct symbol { /* a variable name */
+  struct ref *reflist;
+  char *name;
+};
 
-  struct ref {
-    struct ref *next;
-    char *filename;
-    int flags;			/* 01 - definition */
-    int lineno;
-  };
+struct ref {
+  struct ref *next;
+  char *filename;
+  int flags; /* 01 - definition */
+  int lineno;
+};
 
-  /* simple symtab of fixed size */
-  #define NHASH 9997
-  struct symbol symtab[NHASH];
+/* simple symtab of fixed size */
+#define NHASH 9997
+struct symbol symtab[NHASH];
 
-  struct symbol *lookup(char*);
-  void addref(int, char*, char*, int);
+struct symbol *lookup(char *);
+void addref(int, char *, char *, int);
 
-  char *curfilename;		/* name of current input file */
+char *curfilename; /* name of current input file */
 
-  int defining;			/* names are probably definitions */
+int defining; /* names are probably definitions */
 
 /* include file stack */
-  struct bufstack {
-    struct bufstack *prev;	/* previous entry */
-    YY_BUFFER_STATE bs;		/* saved buffer */
-    int lineno;			/* saved line number in this file */
-    char *filename;		/* name of this file */
-    FILE *f;			/* current file */
-  } *curbs;
+struct bufstack {
+  struct bufstack *prev; /* previous entry */
+  YY_BUFFER_STATE bs;    /* saved buffer */
+  int lineno;            /* saved line number in this file */
+  char *filename;        /* name of this file */
+  FILE *f;               /* current file */
+} *curbs;
 
-  int newfile(char *fn);
-  int popfile(void);
-
+int newfile(char *fn);
+int popfile(void);
 %}
+
 %%
+
  /* comments */
 "/*"           { BEGIN(COMMENT) ; }
 <COMMENT>"*/"  { BEGIN(INITIAL); }

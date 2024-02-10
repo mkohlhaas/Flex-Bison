@@ -34,7 +34,7 @@ int main(void) {
 
   while ((tok = yylex())) {
     if (tok == NUMBER) {
-      printf(" = %d\n", yylval);
+      printf("%d = %d\n", tok, yylval);
     } else {
       printf("%d\n", tok);
     }
