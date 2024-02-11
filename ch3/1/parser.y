@@ -1,13 +1,13 @@
 // calculator with AST
 
 %{
+#  include "aux.h"
 #  include <stdio.h>
 #  include <stdlib.h>
-#  include "fb3-1.h"
 %}
 
 %union {
-  struct ast *a;
+  ast *a;
   double d;
 }
 
@@ -21,12 +21,12 @@
 
 calclist: /* nothing */
 | calclist exp EOL {
-     printf("= %4.4g\n", eval($2));
-     treefree($2);
-     printf("> ");
- }
+                     printf("= %4.4g\n", eval($2));
+                     treefree($2);
+                     printf("> ");
+                   }
 
- | calclist EOL { printf("> "); } /* blank line or a comment */
+ | calclist EOL    { printf("> "); } /* blank line or a comment */
  ;
 
 exp: factor
@@ -39,9 +39,10 @@ factor: term
  | factor '/' term { $$ = newast('/', $1,$3); }
  ;
 
-term: NUMBER   { $$ = newnum($1); }
- | '|' term    { $$ = newast('|', $2, NULL); }
- | '(' exp ')' { $$ = $2; }
- | '-' term    { $$ = newast('M', $2, NULL); }
+term: NUMBER       { $$ = newnum($1); }
+ | '|' term        { $$ = newast('|', $2, NULL); }
+ | '(' exp ')'     { $$ = $2; }
+ | '-' term        { $$ = newast('M', $2, NULL); }
  ;
+
 %%

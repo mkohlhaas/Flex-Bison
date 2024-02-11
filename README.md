@@ -22,7 +22,8 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
 - void yyrestart(FILE *new_file) → may be called to point yyin at a new input file
 - YY_BUFFER_STATE yy_create_buffer (FILE *file, int size) → used for multiple input files
 - yylval
-- yyerror()
+- yyerror() → There is a default implementation provided by the library, but you can write your own.
+  - default implementation: int yyerror (char const *);
 - yylineno: flex provides this global variable for tracking line numbers. You are responsible for its management.
 - %option nodefault → no default rule for unmatched input (recommended!)
 - %s or %x (start conditions; inclusive/exclusive): inclusive → rules with no start conditions at all will also be active
@@ -44,4 +45,7 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
     handling include files.
 - %option case-insensitive
 - An action consisting solely of a vertical bar ("|") tells flex that the action for this rule is the same as the action for the next rule.
-- Named patterns
+- Named patterns; expand with {ame}
+- /* ... */ is a comment, // is not!, comment must be indented by at least one space!
+- flex: 16K buffer limit
+- bison: default action → $$ = $1;

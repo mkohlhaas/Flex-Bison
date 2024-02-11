@@ -22,7 +22,6 @@
 
 %token IF THEN ELSE WHILE DO LET
 
-
 %nonassoc <fn> CMP
 %right '='
 %left '+' '-'

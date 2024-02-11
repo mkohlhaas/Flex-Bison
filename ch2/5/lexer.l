@@ -14,8 +14,8 @@ EXP	([Ee][-+]?[0-9]+)
 
 /* integer length */
 ILEN    ([Uu](L|l|LL|ll)?|(L|l|LL|ll)[Uu]?)
-/* the symbol table */
 
+/* the symbol table */
 %{
 typedef struct { /* a variable name */
   struct ref *reflist;
@@ -58,8 +58,8 @@ int popfile(void);
 %%
 
  /* ignore comments */
-"/*"           { BEGIN(COMMENT) ; }
-<COMMENT>"*/"  { BEGIN(INITIAL); }
+"/*"                    { BEGIN(COMMENT) ; }
+<COMMENT>"*/"           { BEGIN(INITIAL); }
 <COMMENT>([^*]|\en)+|.
 
  /* C++ comment, a common extension */
