@@ -35,3 +35,11 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
 - There are a number of special directives which can be included within an action:
   - ECHO: copies yytext to the scanner's output.
 - yyterminate()
+- %option yylineno :
+    The %yylineno option tells flex to define an integer variable called yylineno and to
+    maintain the current line number in it. What that means is that every time the scanner
+    reads a newline character, it increments yylineno, and if the scanner backs up over a
+    newline (using some features we’ll get to later), it decrements it. It’s still up to you to
+    initialize yylineno to 1 at the beginning of each file and to save and restore it if you’re
+    handling include files.
+- %option case-insensitive
