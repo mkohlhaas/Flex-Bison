@@ -43,3 +43,5 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
     initialize yylineno to 1 at the beginning of each file and to save and restore it if you’re
     handling include files.
 - %option case-insensitive
+- An action consisting solely of a vertical bar ("|") tells flex that the action for this rule is the same as the action for the next rule.
+- Named patterns
