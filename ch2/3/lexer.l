@@ -2,43 +2,45 @@
 
 %option noyywrap warn nodefault
 %x IFILE
- struct bufstack {
-   struct bufstack *prev; /* previous entry */
-   YY_BUFFER_STATE bs;    /* saved buffer */
-   int lineno;            /* saved line number */
-   char *filename;        /* name of this file */
-   FILE *f;               /* current file */
- } *curbs = NULL;
+ typedef struct bufstack {
+   struct bufstack *prev;
+   YY_BUFFER_STATE bs;
+   int lineno;
+   char *filename;
+   FILE *file;
+ } bufstack;
 
- char *curfilename; /* name of current input file */
+ bufstack *curBS = NULL;  /* current buffer stack */
 
- int newfile(char *fn);
+ char *curFilename;       /* name of current input file */
+
+ int newfile(char *filename);
  int popfile(void);
 
 %%
 
 ^"#"[ \t]*include[ \t]*[\"<] { BEGIN IFILE; }
+^.                           { fprintf(yyout, "%5d %s", yylineno,   yytext); } /* print line number and first character of line */
+^\n                          { fprintf(yyout, "%5d %s", yylineno++, yytext); } /* print empty lines (yytext → newline) */
+.                            { ECHO; }                                         /* print current character ("." → anything but newline) */
+\n                           { ECHO; yylineno++; }                             /* print newline */
+<<EOF>>                      {
+                               if(!popfile()) {
+                                 yyterminate();
+                               }
+                             }
 
 <IFILE>[^ \t\n\">]+          {
                                { int c;
                         			   while((c = input()) && c != '\n') ;
                         			 }
-                        			 yylineno++;
                         			 if(!newfile(yytext)) {
                                  yyterminate(); /* no such file */
                                }
                         			 BEGIN INITIAL;
                              }
 
-<IFILE>.|\n                { fprintf(stderr, "%d bad include line\n", yylineno); yyterminate(); }
-^.                         { fprintf(yyout, "%d %s", yylineno,   yytext); }
-^\n                        { fprintf(yyout, "%d %s", yylineno++, yytext); }
-\n                         { ECHO; yylineno++; }
-.                          { ECHO; }
-<<EOF>>                    { if(!popfile()) {
-                               yyterminate();
-                             }
-                           }
+<IFILE>.|\n                  { fprintf(stderr, "%d bad include line\n", yylineno); yyterminate(); }
 
 %%
 
@@ -53,48 +55,50 @@ int main(int argc, char **argv) {
   }
 }
 
-int newfile(char *fn) {
-  FILE *f = fopen(fn, "r");
-  struct bufstack *bs = malloc(sizeof(struct bufstack));
+// opens file, creates a new buffer and switches to it
+int newfile(char *filename) {
+  FILE *file = fopen(filename, "r");
+  bufstack *bs = malloc(sizeof(bufstack));
 
   /* die if no file or no room */
-  if (!f) {
-    perror(fn);
+  if (!file) {
+    perror(filename);
     return 0;
   }
 
   if (!bs) {
     perror("malloc");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   /* remember state */
-  if (curbs) {
-    curbs->lineno = yylineno;
+  if (curBS) {
+    curBS->lineno = yylineno;
   }
-  bs->prev = curbs;
+  bs->prev = curBS;
 
   /* set up current entry */
-  bs->bs = yy_create_buffer(f, YY_BUF_SIZE);
-  bs->f = f;
-  bs->filename = fn;
+  bs->bs = yy_create_buffer(file, YY_BUF_SIZE);
+  bs->file = file;
+  bs->filename = filename;
   yy_switch_to_buffer(bs->bs);
-  curbs = bs;
+  curBS = bs;
   yylineno = 1;
-  curfilename = fn;
+  curFilename = filename;
   return 1;
 }
 
+// goes back to previous buffer stack (if available)
 int popfile(void) {
-  struct bufstack *bs = curbs;
-  struct bufstack *prevbs;
+  bufstack *bs = curBS;
+  bufstack *prevbs;
 
   if (!bs) {
     return 0;
   }
 
   /* get rid of current entry */
-  fclose(bs->f);
+  fclose(bs->file);
   yy_delete_buffer(bs->bs);
 
   /* switch back to previous */
@@ -106,9 +110,8 @@ int popfile(void) {
   }
 
   yy_switch_to_buffer(prevbs->bs);
-  curbs = prevbs;
-  yylineno = curbs->lineno;
-  curfilename = curbs->filename;
+  curBS = prevbs;
+  yylineno = curBS->lineno;
+  curFilename = curBS->filename;
   return 1;
 }
-

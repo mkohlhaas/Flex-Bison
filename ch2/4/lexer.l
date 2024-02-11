@@ -4,23 +4,23 @@
 
 /* the symbol table */
 %{
-  struct symbol {		/* a word */
-    struct ref *reflist;
-    char *name;
-  };
-
-  struct ref {
+  typedef struct ref {
     struct ref *next;
     char *filename;
     int flags;
     int lineno;
-  };
+  } ref;
+
+  typedef struct {		/* a word */
+    struct ref *reflist;
+    char *name;
+  } symbol;
 
   /* simple symtab of fixed size */
   #define NHASH 9997
-  struct symbol symtab[NHASH];
+  symbol symtab[NHASH];
 
-  struct symbol *lookup(char*);
+  symbol *lookup(char*);
   void addref(int, char*, char*, int);
 
   char *curfilename;		/* name of current input file */
@@ -54,22 +54,24 @@ to                /* ignore */
 
 %%
 
+int nnew;
+int nold;
+int nprobe;
+
 /* hash a symbol */
 static unsigned symhash(char *sym) {
   unsigned int hash = 0;
   unsigned c;
 
-  while ((c = *sym++))
+  while ((c = *sym++)) {
     hash = hash * 9 ^ c;
+  }
 
   return hash;
 }
 
-int nnew, nold;
-int nprobe;
-
-struct symbol *lookup(char *sym) {
-  struct symbol *sp = &symtab[symhash(sym) % NHASH];
+symbol *lookup(char *sym) {
+  symbol *sp = &symtab[symhash(sym) % NHASH];
   int scount = NHASH; /* how many have we looked at */
 
   while (--scount >= 0) {
@@ -94,16 +96,17 @@ struct symbol *lookup(char *sym) {
 }
 
 void addref(int lineno, char *filename, char *word, int flags) {
-  struct ref *r;
-  struct symbol *sp = lookup(word);
+  ref *r;
+  symbol *sp = lookup(word);
 
   /* don't do dups */
-  if (sp->reflist && sp->reflist->lineno == lineno && sp->reflist->filename == filename)
+  if (sp->reflist && sp->reflist->lineno == lineno && sp->reflist->filename == filename) {
     return;
+  }
 
-  r = malloc(sizeof(struct ref));
+  r = malloc(sizeof(ref));
   if (!r) {
-    fputs("out of space\n", stderr);
+    fprintf(stderr, "out of space\n");
     abort();
   }
   r->next = sp->reflist;
@@ -121,8 +124,8 @@ void addref(int lineno, char *filename, char *word, int flags) {
 
 /* aux function for sorting */
 static int symcompare(const void *xa, const void *xb) {
-  const struct symbol *a = xa;
-  const struct symbol *b = xb;
+  const symbol *a = xa;
+  const symbol *b = xb;
 
   if (!a->name) {
     if (!b->name)
@@ -135,17 +138,17 @@ static int symcompare(const void *xa, const void *xb) {
 }
 
 void printrefs() {
-  struct symbol *sp;
+  symbol *sp;
 
-  qsort(symtab, NHASH, sizeof(struct symbol), symcompare); /* sort the symbol table */
+  qsort(symtab, NHASH, sizeof(symbol), symcompare); /* sort the symbol table */
 
   for (sp = symtab; sp->name && sp < symtab + NHASH; sp++) {
     char *prevfn = NULL; /* last printed filename, to skip dups */
 
     /* reverse the list of references */
-    struct ref *rp = sp->reflist;
-    struct ref *rpp = 0; /* previous ref */
-    struct ref *rpn;     /* next ref */
+    ref *rp = sp->reflist;
+    ref *rpp = NULL; /* previous ref */
+    ref *rpn;     /* next ref */
 
     do {
       rpn = rp->next;
@@ -175,18 +178,18 @@ int main(int argc, char **argv) {
     yylex();
   } else
     for (int i = 1; i < argc; i++) {
-      FILE *f = fopen(argv[i], "r");
+      FILE *file = fopen(argv[i], "r");
 
-      if (!f) {
+      if (!file) {
         perror(argv[1]);
-        return (1);
+        exit(EXIT_FAILURE);
       }
       curfilename = argv[i]; /* for addref */
 
-      yyrestart(f);
+      yyrestart(file);
       yylineno = 1;
       yylex();
-      fclose(f);
+      fclose(file);
     }
 
   printf("old = %d, new = %d, total = %d, probes = %d, avg = %1.2f\n", nold, nnew, nold + nnew, nprobe, (float)nprobe / (nold + nnew));
