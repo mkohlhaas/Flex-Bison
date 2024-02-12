@@ -67,7 +67,7 @@ ast *newnum(double d) {
 
   if (!a) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   a->nodetype = 'K';
   a->number = d;
@@ -79,7 +79,7 @@ ast *newcmp(int cmptype, ast *l, ast *r) {
 
   if (!a) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   a->nodetype = '0' + cmptype;
   a->l = l;
@@ -92,7 +92,7 @@ ast *newfunc(int functype, ast *l) {
 
   if (!a) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   a->nodetype = 'F';
   a->l = l;
@@ -105,7 +105,7 @@ ast *newcall(symbol *s, ast *l) {
 
   if (!a) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   a->nodetype = 'C';
   a->l = l;
@@ -118,7 +118,7 @@ ast *newref(symbol *s) {
 
   if (!a) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   a->nodetype = 'N';
   a->s = s;
@@ -130,7 +130,7 @@ ast *newasgn(symbol *s, ast *v) {
 
   if (!a) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   a->nodetype = '=';
   a->s = s;
@@ -143,7 +143,7 @@ ast *newflow(int nodetype, ast *cond, ast *tl, ast *el) {
 
   if (!a) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   a->nodetype = nodetype;
   a->cond = cond;
@@ -157,7 +157,7 @@ symlist *newsymlist(symbol *sym, symlist *next) {
 
   if (!sl) {
     yyerror("out of memory");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
   sl->sym = sym;
   sl->next = next;
