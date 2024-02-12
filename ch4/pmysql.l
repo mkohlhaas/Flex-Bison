@@ -32,7 +32,7 @@ ALL	{ return ALL; }
 ALTER	{ return ALTER; }
 ANALYZE	{ return ANALYZE; }
 
-  /* Hack for BETWEEN ... AND ... 
+  /* Hack for BETWEEN ... AND ...
    * return special AND token if BETWEEN seen
    */
 <BTWMODE>AND	{ BEGIN INITIAL; return AND; }
@@ -253,7 +253,7 @@ ZEROFILL	{ return ZEROFILL; }
 
    /* numbers */
 
--?[0-9]+	        { yylval.intval = atoi(yytext); return INTNUM; } 
+-?[0-9]+	        { yylval.intval = atoi(yytext); return INTNUM; }
 
 -?[0-9]+"."[0-9]* |
 -?"."[0-9]+	|
@@ -275,7 +275,7 @@ FALSE	{ yylval.intval = 0; return BOOL; }
 \"(\\.|[^"\n])*$	{ yyerror("Unterminated string %s", yytext); }
 
    /* hex strings */
-X'[0-9A-F]+' |  
+X'[0-9A-F]+' |
 0X[0-9A-F]+  { yylval.strval = strdup(yytext); return STRING; }
 
    /* bit strings */
@@ -309,7 +309,7 @@ TRIM/"(" { return FTRIM; }
 DATE_ADD/"(" { return FDATE_ADD; }
 DATE_SUB/"(" { return FDATE_SUB; }
 
-	/* 
+	/*
          * peek ahead and return function if name(
          */
 COUNT    { int c = input(); unput(c);
@@ -338,7 +338,7 @@ COUNT    { int c = input(); unput(c);
 
 ":="     { return ASSIGN; }
 
-	/* comments */   
+	/* comments */
 #.*		;
 "--"[ \t].*	;
 

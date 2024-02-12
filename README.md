@@ -49,3 +49,7 @@ Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
 - /* ... */ is a comment, // is not!, comment must be indented by at least one space!
 - flex: 16K buffer limit
 - bison: default action → $$ = $1;
+- bison: A %start declaration identifies the top-level rule, so we don’t have to put it at the beginning of the parser.
+- bison: e.g. definition of a recursive data structure, e.g. a list:
+  - right recursive → stmt ; list rather
+  - left recursive  → list stmt ;

@@ -13,7 +13,7 @@ int yyparse();
 symbol symtab[NHASH];
 
 /* hash a symbol */
-static unsigned symhash(char *sym) {
+static unsigned hashSym(char *sym) {
   unsigned int hash = 0;
   unsigned c;
 
@@ -24,38 +24,59 @@ static unsigned symhash(char *sym) {
   return hash;
 }
 
-symbol *lookup(char *sym) {
-  symbol *sp = &symtab[symhash(sym) % NHASH];
-  int scount = NHASH; /* how many have we looked at */
-
-  while (--scount >= 0) {
-    if (sp->name && !strcmp(sp->name, sym)) {
-      return sp;
-    }
-
-    if (!sp->name) { /* new entry */
-      sp->name = strdup(sym);
-      sp->value = 0;
-      sp->func = NULL;
-      sp->syms = NULL;
-      return sp;
-    }
-
-    if (++sp >= symtab + NHASH)
-      sp = symtab; /* try the next entry */
-  }
-  yyerror("symbol table overflow\n");
-  abort(); /* tried them all, table is full */
-}
-
-ast *newast(int nodetype, ast *l, ast *r) {
-  ast *a = malloc(sizeof(ast));
-
-  if (!a) {
+void *allocAst(size_t size) {
+  void *ast = malloc(size);
+  if (!ast) {
     yyerror("out of memory");
     exit(EXIT_FAILURE);
   }
+  return ast;
+}
 
+/* lookup symbolName in symtab */
+/* insert symbolName if not found */
+symbol *lookup(char *symbolName) {
+  symbol *symbol = &symtab[hashSym(symbolName) % NHASH];
+  int scount = NHASH; /* how many have we looked at */
+
+  while (--scount >= 0) {
+    if (symbol->name && !strcmp(symbol->name, symbolName)) {
+      return symbol; // we found the symbol
+    }
+
+    // insert new entry
+    if (!symbol->name) {                 /* empty slot in symbol table ? */
+      symbol->name = strdup(symbolName); // Make a copy of bison provided string!
+      symbol->value = 0;
+      symbol->func = NULL;
+      symbol->syms = NULL;
+      return symbol;
+    }
+
+    if (++symbol >= symtab + NHASH) {
+      symbol = symtab; /* try the next entry */
+    }
+  }
+  yyerror("symbol table overflow\n");
+  exit(EXIT_FAILURE); /* tried them all, table is full */
+}
+
+/* node types
+ *  + - * / |
+ *  0-7 comparison ops, bit coded 04 equal, 02 less, 01 greater
+ *  M unary minus
+ *  L statement list
+ *  I IF statement
+ *  W WHILE statement
+ *  N symbol ref
+ *  = assignment
+ *  S list of symbols
+ *  F built in function call
+ *  C user function call
+ */
+
+ast *newast(int nodetype, ast *l, ast *r) {
+  ast *a = allocAst(sizeof(ast));
   a->nodetype = nodetype;
   a->l = l;
   a->r = r;
@@ -63,50 +84,30 @@ ast *newast(int nodetype, ast *l, ast *r) {
 }
 
 ast *newnum(double d) {
-  numval *a = malloc(sizeof(numval));
-
-  if (!a) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+  numval *a = allocAst(sizeof(numval));
   a->nodetype = 'K';
   a->number = d;
   return (ast *)a;
 }
 
 ast *newcmp(int cmptype, ast *l, ast *r) {
-  ast *a = malloc(sizeof(ast));
-
-  if (!a) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+  ast *a = allocAst(sizeof(ast));
   a->nodetype = '0' + cmptype;
   a->l = l;
   a->r = r;
   return a;
 }
 
-ast *newfunc(int functype, ast *l) {
-  fncall *a = malloc(sizeof(fncall));
-
-  if (!a) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+ast *newfunc(int func, ast *l) {
+  fncall *a = allocAst(sizeof(fncall));
   a->nodetype = 'F';
   a->l = l;
-  a->functype = functype;
+  a->func = func;
   return (ast *)a;
 }
 
 ast *newcall(symbol *s, ast *l) {
-  ufncall *a = malloc(sizeof(ufncall));
-
-  if (!a) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+  ufncall *a = allocAst(sizeof(ufncall));
   a->nodetype = 'C';
   a->l = l;
   a->s = s;
@@ -114,24 +115,14 @@ ast *newcall(symbol *s, ast *l) {
 }
 
 ast *newref(symbol *s) {
-  symref *a = malloc(sizeof(symref));
-
-  if (!a) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+  symref *a = allocAst(sizeof(symref));
   a->nodetype = 'N';
   a->s = s;
   return (ast *)a;
 }
 
 ast *newasgn(symbol *s, ast *v) {
-  symasgn *a = malloc(sizeof(symasgn));
-
-  if (!a) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+  symasgn *a = allocAst(sizeof(symasgn));
   a->nodetype = '=';
   a->s = s;
   a->v = v;
@@ -139,12 +130,7 @@ ast *newasgn(symbol *s, ast *v) {
 }
 
 ast *newflow(int nodetype, ast *cond, ast *tl, ast *el) {
-  flow *a = malloc(sizeof(flow));
-
-  if (!a) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+  flow *a = allocAst(sizeof(flow));
   a->nodetype = nodetype;
   a->cond = cond;
   a->tl = tl;
@@ -153,66 +139,56 @@ ast *newflow(int nodetype, ast *cond, ast *tl, ast *el) {
 }
 
 symlist *newsymlist(symbol *sym, symlist *next) {
-  symlist *sl = malloc(sizeof(symlist));
-
-  if (!sl) {
-    yyerror("out of memory");
-    exit(EXIT_FAILURE);
-  }
+  symlist *sl = allocAst(sizeof(symlist));
   sl->sym = sym;
   sl->next = next;
   return sl;
 }
 
 void symlistfree(symlist *sl) {
-  symlist *nsl;
-
   while (sl) {
-    nsl = sl->next;
+    symlist *nsl = sl->next;
     free(sl);
     sl = nsl;
   }
 }
 
 /* define a function */
-void dodef(symbol *name, symlist *syms, ast *func) {
-  if (name->syms)
-    symlistfree(name->syms);
-  if (name->func)
-    treefree(name->func);
-  name->syms = syms;
-  name->func = func;
+/* A symbol pointer (symbol *) is always a pointer into the symbol table! */
+/* Comes from the NAME token which call lookup(). */
+void defFn(symbol *symbol, symlist *syms, ast *func) {
+  if (symbol->syms) {
+    // delete old symbol list
+    symlistfree(symbol->syms);
+  }
+  if (symbol->func) {
+    // delete old function
+    treefree(symbol->func);
+  }
+  // insert new function and symbol list
+  symbol->syms = syms;
+  symbol->func = func;
 }
 
-static double callbuiltin(fncall *);
-static double calluser(ufncall *);
-
 double eval(ast *a) {
-  double v;
-
   if (!a) {
     yyerror("internal error, null eval");
     return 0.0;
   }
 
+  flow *flowAst;
+  double v;
   switch (a->nodetype) {
-    /* constant */
-  case 'K':
+  case 'K': /* constant */
     v = ((numval *)a)->number;
     break;
-
-    /* name reference */
-  case 'N':
+  case 'N': /* name reference */
     v = ((symref *)a)->s->value;
     break;
-
-    /* assignment */
-  case '=':
+  case '=': /* assignment */
     v = ((symasgn *)a)->s->value = eval(((symasgn *)a)->v);
     break;
-
-    /* expressions */
-  case '+':
+  case '+': /* expressions */
     v = eval(a->l) + eval(a->r);
     break;
   case '-':
@@ -230,9 +206,7 @@ double eval(ast *a) {
   case 'M':
     v = -eval(a->l);
     break;
-
-    /* comparisons */
-  case '1':
+  case '1': /* comparisons */
     v = (eval(a->l) > eval(a->r)) ? 1 : 0;
     break;
   case '2':
@@ -250,53 +224,49 @@ double eval(ast *a) {
   case '6':
     v = (eval(a->l) <= eval(a->r)) ? 1 : 0;
     break;
-
-  /* control flow */
-  /* null if/else/do expressions allowed in the grammar, so check for them */
-  case 'I':
-    if (eval(((flow *)a)->cond) != 0) {
-      if (((flow *)a)->tl) {
-        v = eval(((flow *)a)->tl);
-      } else
+  case 'I': /* null if/else/do expressions allowed in the grammar, so check for them */
+    flowAst = (flow *)a;
+    if (!eval(flowAst->cond)) {
+      if (flowAst->tl) {
+        v = eval(flowAst->tl);
+      } else {
         v = 0.0; /* a default value */
+      }
     } else {
-      if (((flow *)a)->el) {
-        v = eval(((flow *)a)->el);
-      } else
+      if (flowAst->el) {
+        v = eval(flowAst->el);
+      } else {
         v = 0.0; /* a default value */
+      }
     }
     break;
-
   case 'W':
+    flowAst = (flow *)a;
     v = 0.0; /* a default value */
-
-    if (((flow *)a)->tl) {
-      while (eval(((flow *)a)->cond) != 0)
-        v = eval(((flow *)a)->tl);
+    if (flowAst->tl) {
+      while (eval(flowAst->cond)) {
+        v = eval(flowAst->tl);
+      }
     }
     break; /* last value is value */
-
   case 'L':
     eval(a->l);
     v = eval(a->r);
     break;
-
   case 'F':
     v = callbuiltin((fncall *)a);
     break;
-
   case 'C':
     v = calluser((ufncall *)a);
     break;
-
   default:
     printf("internal error: bad node %c\n", a->nodetype);
   }
   return v;
 }
 
-static double callbuiltin(fncall *f) {
-  enum bifs functype = f->functype;
+double callbuiltin(fncall *f) {
+  bifs functype = f->func;
   double v = eval(f->l);
 
   switch (functype) {
@@ -307,48 +277,45 @@ static double callbuiltin(fncall *f) {
   case B_log:
     return log(v);
   case B_print:
-    printf("= %4.4g\n", v);
+    printf("= %.4g\n", v);
     return v;
   default:
-    yyerror("Unknown built-in function %d", functype);
+    yyerror("Unknown built-in function %d. Yielding default value (0.0)!", functype);
     return 0.0;
   }
 }
 
-static double calluser(ufncall *f) {
-  symbol *fn = f->s;       /* function name */
-  symlist *sl;             /* dummy arguments */
-  ast *args = f->l;        /* actual arguments */
-  double *oldval, *newval; /* saved arg values */
+double calluser(ufncall *f) {
   double v;
-  int nargs;
-  int i;
 
+  symbol *fn = f->s; /* function name */
   if (!fn->func) {
     yyerror("call to undefined function", fn->name);
-    return 0;
+    return 0.0;
   }
 
   /* count the arguments */
-  sl = fn->syms;
-  for (nargs = 0; sl; sl = sl->next)
+  int nargs;
+  symlist *sl = fn->syms;
+  for (nargs = 0; sl; sl = sl->next) {
     nargs++;
+  }
 
   /* prepare to save them */
-  oldval = (double *)malloc(nargs * sizeof(double));
-  newval = (double *)malloc(nargs * sizeof(double));
+  double *oldval = (double *)malloc(nargs * sizeof(double));
+  double *newval = (double *)malloc(nargs * sizeof(double));
   if (!oldval || !newval) {
     yyerror("out of memory in %s", fn->name);
     return 0.0;
   }
 
-  /* evaluate the arguments */
-  for (i = 0; i < nargs; i++) {
+  ast *args = f->l;                 /* actual arguments */
+  for (int i = 0; i < nargs; i++) { /* evaluate the arguments */
     if (!args) {
       yyerror("too few args in call to %s", fn->name);
       free(oldval);
       free(newval);
-      return 0;
+      return 0.0;
     }
 
     if (args->nodetype == 'L') { /* if this is a list node */
@@ -360,24 +327,20 @@ static double calluser(ufncall *f) {
     }
   }
 
-  /* save old values of dummies, assign new ones */
-  sl = fn->syms;
-  for (i = 0; i < nargs; i++) {
+  sl = fn->syms; /* save old values of dummies, assign new ones */
+  for (int i = 0; i < nargs; i++) {
     symbol *s = sl->sym;
 
     oldval[i] = s->value;
     s->value = newval[i];
     sl = sl->next;
   }
-
   free(newval);
 
-  /* evaluate the function */
-  v = eval(fn->func);
+  v = eval(fn->func); /* evaluate the function */
 
-  /* put the dummies back */
-  sl = fn->syms;
-  for (i = 0; i < nargs; i++) {
+  sl = fn->syms; /* put the dummies back */
+  for (int i = 0; i < nargs; i++) {
     symbol *s = sl->sym;
 
     s->value = oldval[i];
@@ -390,9 +353,7 @@ static double calluser(ufncall *f) {
 
 void treefree(ast *a) {
   switch (a->nodetype) {
-
-    /* two subtrees */
-  case '+':
+  case '+': /* two subtrees */
   case '-':
   case '*':
   case '/':
@@ -404,23 +365,17 @@ void treefree(ast *a) {
   case '6':
   case 'L':
     treefree(a->r);
-
-    /* one subtree */
-  case '|':
+  case '|': /* one subtree */
   case 'M':
   case 'C':
   case 'F':
     treefree(a->l);
-
-    /* no subtree */
-  case 'K':
+  case 'K': /* no subtree */
   case 'N':
     break;
-
   case '=':
     free(((symasgn *)a)->v);
     break;
-
   case 'I':
   case 'W':
     free(((flow *)a)->cond);
@@ -429,11 +384,9 @@ void treefree(ast *a) {
     if (((flow *)a)->el)
       free(((flow *)a)->el);
     break;
-
   default:
     printf("internal error: free bad node %c\n", a->nodetype);
   }
-
   free(a); /* always free the node itself */
 }
 
@@ -446,15 +399,16 @@ void yyerror(char *s, ...) {
   fprintf(stderr, "\n");
 }
 
-int main() {
-  printf("> ");
+int main(void) {
+  printf("» ");
   return yyparse();
 }
 
-/* debugging: dump out an AST */
+// debug flag
 int debug = 0;
-void dumpast(ast *a, int level) {
 
+/* debugging: dump out an AST */
+void dumpast(ast *a, int level) {
   printf("%*s", 2 * level, ""); /* indent to this level */
   level++;
 
@@ -464,24 +418,17 @@ void dumpast(ast *a, int level) {
   }
 
   switch (a->nodetype) {
-    /* constant */
-  case 'K':
+  case 'K': /* constant */
     printf("number %4.4g\n", ((numval *)a)->number);
     break;
-
-    /* name reference */
-  case 'N':
+  case 'N': /* name reference */
     printf("ref %s\n", ((symref *)a)->s->name);
     break;
-
-    /* assignment */
-  case '=':
+  case '=': /* assignment */
     printf("= %s\n", ((symref *)a)->s->name);
     dumpast(((symasgn *)a)->v, level);
     return;
-
-    /* expressions */
-  case '+':
+  case '+': /* expressions */
   case '-':
   case '*':
   case '/':
@@ -496,13 +443,11 @@ void dumpast(ast *a, int level) {
     dumpast(a->l, level);
     dumpast(a->r, level);
     return;
-
   case '|':
   case 'M':
     printf("unop %c\n", a->nodetype);
     dumpast(a->l, level);
     return;
-
   case 'I':
   case 'W':
     printf("flow %c\n", a->nodetype);
@@ -512,17 +457,14 @@ void dumpast(ast *a, int level) {
     if (((flow *)a)->el)
       dumpast(((flow *)a)->el, level);
     return;
-
   case 'F':
-    printf("builtin %d\n", ((fncall *)a)->functype);
+    printf("builtin %d\n", ((fncall *)a)->func);
     dumpast(a->l, level);
     return;
-
   case 'C':
     printf("call %s\n", ((ufncall *)a)->s->name);
     dumpast(a->l, level);
     return;
-
   default:
     printf("bad %c\n", a->nodetype);
     return;

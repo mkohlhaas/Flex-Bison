@@ -23,7 +23,7 @@ void emit(char *s, ...);
 	char *strval;
 	int subtok;
 }
-	
+
 	/* names and literal values */
 
 %token <strval> NAME
@@ -315,10 +315,10 @@ select_stmt: SELECT select_opts select_expr_list
      opt_into_list { emit("SELECT %d %d %d", $2, $3, $5); } ;
 ;
 
-opt_where: /* nil */ 
+opt_where: /* nil */
    | WHERE expr { emit("WHERE"); };
 
-opt_groupby: /* nil */ 
+opt_groupby: /* nil */
    | GROUP BY groupby_list opt_with_rollup
                              { emit("GROUPBYLIST %d %d", $3, $4); }
 ;
@@ -345,9 +345,9 @@ opt_orderby: /* nil */ | ORDER BY groupby_list { emit("ORDERBY %d", $3); }
 
 opt_limit: /* nil */ | LIMIT expr { emit("LIMIT 1"); }
   | LIMIT expr ',' expr             { emit("LIMIT 2"); }
-  ; 
+  ;
 
-opt_into_list: /* nil */ 
+opt_into_list: /* nil */
    | INTO column_list { emit("INTO %d", $2); }
    ;
 
@@ -389,7 +389,7 @@ table_factor:
   | '(' table_references ')' { emit("TABLEREFERENCES %d", $2); }
   ;
 
-opt_as: AS 
+opt_as: AS
   | /* nil */
   ;
 
@@ -542,7 +542,7 @@ insert_stmt: INSERT insert_opts opt_into NAME opt_col_names
   ;
 
 insert_asgn_list:
-     NAME COMPARISON expr 
+     NAME COMPARISON expr
      { if ($2 != 4) yyerror("bad insert assignment to %s", $1);
        emit("ASSIGN %s", $1); free($1); $$ = 1; }
    | NAME COMPARISON DEFAULT
@@ -594,10 +594,10 @@ update_opts: /* nil */ { $$ = 0; }
    ;
 
 update_asgn_list:
-     NAME COMPARISON expr 
+     NAME COMPARISON expr
        { if ($2 != 4) yyerror("bad insert assignment to %s", $1);
 	 emit("ASSIGN %s", $1); free($1); $$ = 1; }
-   | NAME '.' NAME COMPARISON expr 
+   | NAME '.' NAME COMPARISON expr
        { if ($4 != 4) yyerror("bad insert assignment to %s", $1);
 	 emit("ASSIGN %s.%s", $1, $3); free($1); free($3); $$ = 1; }
    | update_asgn_list ',' NAME COMPARISON expr
@@ -614,7 +614,7 @@ update_asgn_list:
 stmt: create_database_stmt { emit("STMT"); }
    ;
 
-create_database_stmt: 
+create_database_stmt:
      CREATE DATABASE opt_if_not_exists NAME { emit("CREATEDATABASE %d %s", $3, $4); free($4); }
    | CREATE SCHEMA opt_if_not_exists NAME { emit("CREATEDATABASE %d %s", $3, $4); free($4); }
    ;
@@ -803,7 +803,7 @@ expr: expr '+' expr { emit("ADD"); }
    | NOT expr { emit("NOT"); }
    | '!' expr { emit("NOT"); }
    | USERVAR ASSIGN expr { emit("ASSIGN @%s", $1); free($1); }
-   ;    
+   ;
 
 expr:  expr IS NULLX     { emit("ISNULL"); }
    |   expr IS NOT NULLX { emit("ISNULL"); emit("NOT"); }
@@ -835,7 +835,7 @@ expr: NAME '(' opt_val_list ')' {  emit("CALL %d %s", $3, $1); free($1); }
 
   /* functions with special syntax */
 expr: FCOUNT '(' '*' ')' { emit("COUNTALL") }
-   | FCOUNT '(' expr ')' { emit(" CALL 1 COUNT"); } 
+   | FCOUNT '(' expr ')' { emit(" CALL 1 COUNT"); }
 
 expr: FSUBSTRING '(' val_list ')' {  emit("CALL %d SUBSTR", $3);}
    | FSUBSTRING '(' expr FROM expr ')' {  emit("CALL 2 SUBSTR"); }
@@ -871,7 +871,7 @@ expr: CASE expr case_list END           { emit("CASEVAL %d 0", $3); }
    ;
 
 case_list: WHEN expr THEN expr     { $$ = 1; }
-         | case_list WHEN expr THEN expr { $$ = $1+1; } 
+         | case_list WHEN expr THEN expr { $$ = $1+1; }
    ;
 
 expr: expr LIKE expr { emit("LIKE"); }

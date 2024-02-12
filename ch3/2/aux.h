@@ -1,18 +1,19 @@
 /* Declarations for a calculator */
 
-/* symbol table */
+/* Abstract Syntax Tree */
+typedef struct ast {
+  int nodetype;
+  struct ast *l;
+  struct ast *r;
+} ast;
+
+/* symbol (variable names for values and functions) */
 typedef struct symbol { /* a variable name */
   char *name;
-  double value;
-  struct ast *func;     /* stmt for the function */
-  struct symlist *syms; /* list of dummy args */
+  double value;         /* if symbol is a value */
+  ast *func;            /* if symbol is a function */
+  struct symlist *syms; /* function args */
 } symbol;
-
-/* simple symtab of fixed size */
-#define NHASH 9997
-extern symbol symtab[NHASH];
-
-symbol *lookup(char *);
 
 /* list of symbols, for an argument list */
 typedef struct symlist {
@@ -20,71 +21,47 @@ typedef struct symlist {
   struct symlist *next;
 } symlist;
 
-struct symlist *newsymlist(symbol *sym, struct symlist *next);
-void symlistfree(struct symlist *sl);
-
-/* node types
- *  + - * / |
- *  0-7 comparison ops, bit coded 04 equal, 02 less, 01 greater
- *  M unary minus
- *  L statement list
- *  I IF statement
- *  W WHILE statement
- *  N symbol ref
- *  = assignment
- *  S list of symbols
- *  F built in function call
- *  C user function call
- */
-
 /* built-in functions */
-enum bifs {
+typedef enum {
   B_sqrt = 1,
   B_exp,
   B_log,
   B_print,
-};
+} bifs;
 
 /* nodes in the Abstract Syntax Tree */
 /* all have common initial nodetype */
-
-typedef struct ast {
-  int nodetype;
-  struct ast *l;
-  struct ast *r;
-} ast;
-
 typedef struct fncall { /* built-in function */
-  int nodetype;         /* type F */
+  int nodetype;         /* F */
   ast *l;
-  enum bifs functype;
+  bifs func;
 } fncall;
 
 typedef struct ufncall { /* user function */
-  int nodetype;          /* type C */
+  int nodetype;          /* C */
   ast *l;                /* list of arguments */
   symbol *s;
 } ufncall;
 
 typedef struct flow {
-  int nodetype; /* type I or W */
+  int nodetype; /* I or W */
   ast *cond;    /* condition */
   ast *tl;      /* then or do list */
   ast *el;      /* optional else list */
 } flow;
 
 typedef struct numval {
-  int nodetype; /* type K */
+  int nodetype; /* K */
   double number;
 } numval;
 
 typedef struct symref {
-  int nodetype; /* type N */
+  int nodetype; /* N */
   symbol *s;
 } symref;
 
 typedef struct symasgn {
-  int nodetype; /* type = */
+  int nodetype; /* = */
   symbol *s;
   ast *v; /* value */
 } symasgn;
@@ -99,8 +76,19 @@ ast *newasgn(symbol *s, ast *v);
 ast *newnum(double d);
 ast *newflow(int nodetype, ast *cond, ast *tl, ast *tr);
 
+/* simple symtab of fixed size */
+#define NHASH 9997
+extern symbol symtab[NHASH];
+
+symbol *lookup(char *symbolName);
+symlist *newsymlist(symbol *sym, symlist *next);
+void symlistfree(symlist *sl);
+
 /* define a function */
-void dodef(symbol *name, struct symlist *syms, ast *stmts);
+void defFn(symbol *name, symlist *syms, ast *stmts);
+
+double callbuiltin(fncall *);
+double calluser(ufncall *);
 
 /* evaluate an AST */
 double eval(ast *);

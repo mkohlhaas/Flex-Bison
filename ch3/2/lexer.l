@@ -1,5 +1,3 @@
-/* Recognize tokens for the calculator. */
-
 %option noyywrap nodefault yylineno
 %{
 # include "aux.h"
@@ -32,18 +30,18 @@ EXP	([Ee][-+]?[0-9]+)
 "<="                         { yylval.fn = 6; return CMP; }
 
  /* keywords */
-"if"                         { return IF; }
-"then"                       { return THEN; }
-"else"                       { return ELSE; }
-"while"                      { return WHILE; }
-"do"                         { return DO; }
-"let"                        { return LET;}
+if                           { return IF; }
+then                         { return THEN; }
+else                         { return ELSE; }
+while                        { return WHILE; }
+do                           { return DO; }
+let                          { return LET;}
 
  /* built-in functions */
-"sqrt"                       { yylval.fn = B_sqrt; return FUNC; }
-"exp"                        { yylval.fn = B_exp;  return FUNC; }
-"log"                        { yylval.fn = B_log;  return FUNC; }
-"print"                      { yylval.fn = B_print; return FUNC; }
+sqrt                         { yylval.fn = B_sqrt; return FUNC; }
+exp                          { yylval.fn = B_exp;  return FUNC; }
+log                          { yylval.fn = B_log;  return FUNC; }
+print                        { yylval.fn = B_print; return FUNC; }
 
  /* debug hack */
 "debug"[0-9]+                { debug = atoi(&yytext[5]); printf("debug set to %d\n", debug); }
