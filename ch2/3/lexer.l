@@ -2,6 +2,9 @@
 
 %option noyywrap warn nodefault
 %x IFILE
+
+/* indented text will also be copied verbatimly */
+
  typedef struct bufstack {
    struct bufstack *prev;
    YY_BUFFER_STATE bs;
