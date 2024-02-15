@@ -1,34 +1,55 @@
-/* float exponent */
-EXP	([Ee][-+]?[0-9]+)
+%option nodefault
 
-%s VERTEX
+INDEX   ([1-9]+[0-9]*)
+INTEGER (0|{INDEX})
+EXP	    ([Ee][-+]?[0-9]+)
+FLOAT   (([-+]?[0-9]+"."[0-9]*{EXP}?)|({INTEGER}))
+
+%x VERTEX
 %x FACE
-%x COMMENT
 
 %{
 #include <stdbool.h>
 #include <glib.h>
-bool newVertex = false;
-bool newFace   = false;
+
+typedef struct {
+  float x;
+  float y;
+  float z;
+} vertex;
+
+typedef struct {
+  // list of indices
+  GList *loi;
+} face;
+
+GArray *vertices;
+GArray *indices;
+
 %}
 
 %%
 
-v                               { printf("vertex: \n"); newVertex =true; BEGIN VERTEX; }
-f                               { printf("face: \n");   newFace   =true; BEGIN FACE; }
- /* floating point numbers */
-<VERTEX>{
-[0-9]+"."[0-9]*{EXP}? |
-"."?[0-9]+{EXP}?                { /* create new vertex list */ newVertex = false; printf("%s ", yytext); }
-.
-}
+<INITIAL>^v" "+                     { BEGIN(VERTEX); }
+<INITIAL>^f" "+                     { BEGIN(FACE); }
+<INITIAL>.
+<INITIAL>\n                         { yylineno++; }
 
-<FACE>{
-[1-9]+[0-9]*                    { /* create new face list */   newFace   = false; printf("%s ", yytext); }
-.
-}
+<VERTEX>{FLOAT}(" "+{FLOAT}" "*){2} { printf("%s\n", yytext); BEGIN(INITIAL); }
+<VERTEX>.                           { printf("<VERTEX>Error in line %d: %s\n", yylineno, yytext); exit(EXIT_FAILURE); }
 
-\n                              ECHO;
-.
+<FACE>(({INDEX}"/"*){1,3}" "*)+     { printf("%s\n", yytext);   BEGIN(INITIAL); }
+<FACE>.                             { printf("<FACE>Error in line %d: %s\n", yylineno, yytext); exit(EXIT_FAILURE); }
 
 %%
+
+void addVertex() {}
+
+void addIndex() {}
+
+int main(void) {
+  vertices = g_array_new(FALSE, FALSE, sizeof(vertex));
+  indices  = g_array_new(FALSE, FALSE, sizeof(face));;
+  yylex();
+}
+

@@ -6,12 +6,14 @@ This is the code for the O'Reilly book [*flex & bison*](https://www.oreilly.com/
 
 Original code at ftp://ftp.iecc.com/pub/file/flexbison.zip.
 
-[Flex](https://github.com/westes/flex) and [Bison](https://www.gnu.org/software/bison/) website.
+[`flex`](https://github.com/westes/flex) and [`bison`](https://www.gnu.org/software/bison/) website.
 
 - Three sections separated by '%%':
   - Definitions Section
   - Rules Section
   - User Code Section
+- `flex` is not matching my patterns in the same order that I defined them.
+  - `flex` picks the rule that matches the most text (i.e. the longest possible input string).
 - yyin
 - yyout
 - yylex()
